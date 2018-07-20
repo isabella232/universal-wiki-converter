@@ -2236,11 +2236,23 @@ public class ConverterEngine implements FeedbackHandler {
 	 */
 	private Hashtable createPageTable(Page page, String parentId) {
 		Hashtable table = new Hashtable();
+		String versionComment = page.getVersionComment();
+		// Inject origAuthor in versionComment if the author is not set or is SYSTEM
+		if ((page.getAuthor() == null || page.getAuthor().equals("SYSTEM"))
+				&& (page.getOrigAuthor() != null)) {
+			String versionCommentPrefix = "[Original edit by " + page.getOrigAuthor() + "]";
+			if (versionComment != null && !versionComment.isEmpty()) {
+				versionComment = versionCommentPrefix + " " + versionComment;
+			} else {
+				versionComment = versionCommentPrefix;
+			}
+		}
 		if (page.getConvertedText() == null) page.setConvertedText("");
 		table.put("content", page.getConvertedText());
 		table.put("title", page.getName()); 
 		if (parentId != null && !parentId.equals("null")) table.put("parentId", parentId);
 		if (page.getVersion() > 0) table.put("version", page.getVersion() + "");
+		if (versionComment != null) table.put("versionComment", versionComment);
 		if (page.isBlog() && page.getId() != null) table.put("id", page.getId());
 		return table;
 	}
