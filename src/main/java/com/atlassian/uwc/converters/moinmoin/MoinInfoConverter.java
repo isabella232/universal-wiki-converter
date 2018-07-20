@@ -1,16 +1,15 @@
 package com.atlassian.uwc.converters.moinmoin;
 
+import java.io.File;
+import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.atlassian.uwc.ui.FileUtils;
 import org.apache.log4j.Logger;
 
 import com.atlassian.uwc.converters.BaseConverter;
@@ -20,12 +19,14 @@ public class MoinInfoConverter extends BaseConverter {
 
 	final Logger log = Logger.getLogger(this.getClass());
 	
-	final Pattern date = Pattern.compile("\\{timestamp:([^}]*)\\}", Pattern.MULTILINE);
-	final Pattern username = Pattern.compile("\\{userid:([^}]*)\\}", Pattern.MULTILINE);
+	final Pattern date = Pattern.compile("\\{timestamp:([^}]*)\\}\\n", Pattern.MULTILINE);
+	final Pattern username = Pattern.compile("\\{userid:([^}]*)\\}\\n", Pattern.MULTILINE);
 	// Use reluctant quantifier for '.' in the revcomment, to be able to handle revcomments with curly braces inside
 	final Pattern revInfoPattern = Pattern.compile("\\{revcomment:(.*?)\\}\\n", Pattern.MULTILINE);
+	// Pattern for parsing the origauthor (injected by the MoinmoinExporter), so it can be added to the page metadata
+	final Pattern origAuthorPattern = Pattern.compile("\\{origauthor:([^}]*)\\}\\n", Pattern.MULTILINE);
 	final Pattern catPattern = Pattern.compile("\\[{2}CategoryRoot\\/([^\\]]*)\\]{2}", Pattern.MULTILINE);
-	
+
 	public MoinInfoConverter() {
 		log.debug("Loaded MoinInfoConverter" + this.toString());
 	}
@@ -38,6 +39,7 @@ public class MoinInfoConverter extends BaseConverter {
 		String username = getUser(input);
 		Date timestamp = getDate(input);
 		String revInfo = getRevinfo(input);
+		String origAuthor = getOrigAuthor(input);
 		String converted = cleanUserDate(input);
 		
 		addKeywords(input, page);
@@ -46,8 +48,9 @@ public class MoinInfoConverter extends BaseConverter {
 				
 		if (username != null) page.setAuthor(username);
 		if (timestamp != null) page.setTimestamp(timestamp);
-		
-		// if (revInfo != null) page.set..... //XXX not possible to set the log here 
+		if (revInfo != null) page.setVersionComment(revInfo);
+		if (origAuthor != null) page.setOrigAuthor(origAuthor);
+
 		page.setConvertedText(converted);
 		log.debug("Adding User and Date metadata - Complete");
 	}
@@ -73,7 +76,15 @@ public class MoinInfoConverter extends BaseConverter {
 		return null;
 	}
 
-	
+	private String getOrigAuthor(String input) {
+		Matcher origAuthorFinder = origAuthorPattern.matcher(input);
+		if (origAuthorFinder.find()){
+			return origAuthorFinder.group(1);
+		}
+		return null;
+	}
+
+
 	protected String getUser(String input) {
 		Matcher userFinder = username.matcher(input);
 		if (userFinder.find()) {
@@ -112,8 +123,11 @@ public class MoinInfoConverter extends BaseConverter {
 		if(x.find()){
 			input = x.replaceFirst("");
 		}
+		Matcher origAuthorFinder = origAuthorPattern.matcher(input);
+		if (origAuthorFinder.find()) {
+			input = origAuthorFinder.replaceFirst("");
+		}
 		return input;
 	}
 
-	
 }
