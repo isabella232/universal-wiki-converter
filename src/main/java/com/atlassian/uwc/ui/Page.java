@@ -67,10 +67,19 @@ public class Page implements Comparable {
      * username of author who updated this page. If null, the administrator running the UWC will be used
      */
     private String author;
+	/**
+	 * original username of author who updated this page. Injected in the versionComment when saving to Confluence,
+	 * if author == null or author.equals("SYSTEM"), so we still have a trace of the original author.
+	 */
+	private String origAuthor;
     /**
      * timestamp when the author updated this page.
      */
     private Date timestamp;
+	/**
+	 * comment that was given when the page was updated.
+	 */
+	private String versionComment;
     
     /**
      * map providing information about which version is the latest for a given title.
@@ -393,6 +402,14 @@ public class Page implements Comparable {
 		this.author = author;
 	}
 
+	public String getOrigAuthor() {
+		return origAuthor;
+	}
+
+	public void setOrigAuthor(String origAuthor) {
+		this.origAuthor = origAuthor;
+	}
+
 	public Date getTimestamp() {
 		return timestamp;
 	}
@@ -400,6 +417,15 @@ public class Page implements Comparable {
 	public void setTimestamp(Date timestamp) {
 		this.timestamp = timestamp;
 	}
+
+	public String getVersionComment() {
+		return versionComment;
+	}
+
+	public void setVersionComment(String versionComment) {
+		this.versionComment = versionComment;
+	}
+
 	/* Space methods */
 	public String getSpacekey() {
 		return spacekey;
