@@ -126,8 +126,10 @@ public class MoinMoinAttachmentConverter extends BaseConverter {
     Pattern attachment = Pattern.compile("([{\\[])"+
     		"\\1?" +
     		"(?:(?:attachment)|(?:inline)):"+
-    		"([^}\\]]+)" +
-    		"([}\\]])\\3?");
+    		"([^}\\]\\|]+)" +
+    		// Potentially the target is followed by | and an "alt" text
+    		"(?:\\|([^}\\]]+))?" +
+    		"([}\\]])\\4?");
     Pattern pagedelim = Pattern.compile("\\/([^/]*)");
     
     private String convertAttachments(String input, Page page) {
@@ -138,6 +140,7 @@ public class MoinMoinAttachmentConverter extends BaseConverter {
 			found = true;
 			String type = attachmentFinder.group(1);
 			String target = attachmentFinder.group(2);
+			String altText = attachmentFinder.group(3);
 			String replacement = "";
 			Matcher pagedelimfinder = pagedelim.matcher(target);
 			boolean haspagename = false;
@@ -148,6 +151,9 @@ public class MoinMoinAttachmentConverter extends BaseConverter {
 				haspagename = true;
 			}
 			if (type.startsWith("{")) { //inline 
+				if (altText != null && !altText.isEmpty()) {
+					target = target + "|alt=" + altText + " title=" + altText;
+				}
 				replacement = "!" + target + "!";
 			}
 			else { //link
