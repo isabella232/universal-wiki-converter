@@ -2463,6 +2463,8 @@ public class UWCForm3 {
 	public static void main(String[] args) {
 		if (args.length > 0) setPropsDir(args[0]); //useful for testing
 		
+		// Force unix line termination, otherwise when running on Windows we somehow get carriage returns in noformat blocks when converting from MoinMoin
+		System.setProperty("line.separator", "\n");
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				UWCForm3 application = new UWCForm3();
