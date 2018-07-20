@@ -45,6 +45,7 @@ public class MoinmoinExporter implements Exporter {
     	public Date timestamp;
     	public String revComment;
     	public Integer revision;
+    	public String origAuthor;
     }
     
 	public void cancel() {
@@ -127,7 +128,8 @@ public class MoinmoinExporter implements Exporter {
         String current = null;
 
         Map<String, String> usernames = getUserNameInfo(getSrc() + File.separator + ".." );
-        
+        Map<String, String> orignames = getOrigNameInfo(getSrc() + File.separator + ".." );
+
         for (int i = 0; i < pages.length; i++) {
             if (!pages[i].startsWith(BADCONTENT) && !pages[i].startsWith(CATEGORY) ) { //ignore BADCONTENT page
 					log.debug("page: " + pages[i]);
@@ -142,7 +144,7 @@ public class MoinmoinExporter implements Exporter {
 						continue;
 					}
 					
-					Map<Integer, RevInfo> revmap = readRevisionsInfo(pagedir, usernames);
+					Map<Integer, RevInfo> revmap = readRevisionsInfo(pagedir, usernames, orignames);
 					
             		for (String revision : revisions) {
             			if (!revision.matches("\\d+")) continue; //ignore non-numbers
@@ -223,10 +225,46 @@ public class MoinmoinExporter implements Exporter {
 		return res;
 	}
 
+	private Map<String, String> getOrigNameInfo(String srcDir) {
+		Map<String, String> res = new HashMap<String, String>();
+		String usersrc = srcDir + File.separator + "user";
+		log.debug("read OrigNameInfo: " + usersrc);
+
+		Pattern origNameFinder = Pattern.compile("^origname=(\\S+)", Pattern.MULTILINE);
+
+		try{
+			File userdir = new File(usersrc);
+
+			for( File f : userdir.listFiles() ){
+
+				log.debug("reading userfile: " + f.getName());
+
+				// leave directories out
+				if( f.isDirectory() ) continue;
+
+				String key = f.getName();
+				String cont = FileUtils.readTextFile(f, charset);
+				Matcher m = origNameFinder.matcher(cont);
+				if(m.find()){
+					String origName = m.group(1);
+					log.debug(String.format(" Key: %s \t OrigName %s", key, origName));
+					res.put(key, origName);
+				}
+
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return res;
+	}
+
 	private void addRevData(File outfile, RevInfo revInfo) {
 		final String tsData = "{timestamp:" + fm.format(revInfo.timestamp) + "}\n";
 		final String userid = "{userid:" + revInfo.userid + "}\n";
 		final String revComment = "{revcomment:" + revInfo.revComment + "}\n";
+		// If origAuthor is known, inject it as extra metadata into the exported page so it can be used during conversion
+		final String origAuthor = revInfo.origAuthor == null ? "" : "{origauthor:" + revInfo.origAuthor + "}\n";
 		
 		String filecontents;
 		try {
@@ -236,12 +274,12 @@ public class MoinmoinExporter implements Exporter {
 			e.printStackTrace();
 			return;
 		}
-		String newcontents = tsData + userid + revComment + filecontents;
+		String newcontents = tsData + userid + revComment + origAuthor + filecontents;
 		FileUtils.writeFile(newcontents, outfile.getAbsolutePath());
 		
 	}
 
-	private Map<Integer, RevInfo> readRevisionsInfo(String pagedir, Map<String, String> usermap) {
+	private Map<Integer, RevInfo> readRevisionsInfo(String pagedir, Map<String, String> usermap, Map<String, String> origNameMap) {
 		final File revlogf = new File( pagedir + File.separator + REVLOG);
 		final Map<Integer, RevInfo> res = new HashMap<Integer, RevInfo>();
 		log.debug("Read reflog file: " + revlogf.getAbsolutePath() );
@@ -260,11 +298,15 @@ public class MoinmoinExporter implements Exporter {
 				if(usermap.containsKey(s[6])){
 					r.userid = usermap.get(s[6]);
 				} else {
-					// use the plain number, user was deleted 
-					r.userid = s[6];
+					// make empty, so we get SYSTEM as userid, since there is no useful name anyway
+					r.userid = "";
 				}
 				if(r.userid.trim().equals("")){
 					r.userid = "SYSTEM";
+				}
+
+				if (origNameMap.containsKey(s[6])) {
+					r.origAuthor = origNameMap.get(s[6]);
 				}
 				
 				r.revComment = s[8].trim();
