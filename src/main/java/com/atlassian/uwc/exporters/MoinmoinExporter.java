@@ -302,6 +302,8 @@ public class MoinmoinExporter implements Exporter {
 	
 	protected void addTitleData(File outfile, String title) {
 		title = title.replaceAll("\\(2f\\)", "/");
+		title = title.replaceAll("\\(20\\)", " ");
+		title = title.replaceAll("\\(2d\\)", "-");
 		String titledata = "{orig-title:" + title + "}\n";
 		String filecontents;
 		try {
