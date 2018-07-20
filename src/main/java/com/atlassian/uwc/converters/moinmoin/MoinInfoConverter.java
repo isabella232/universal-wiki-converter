@@ -22,7 +22,8 @@ public class MoinInfoConverter extends BaseConverter {
 	
 	final Pattern date = Pattern.compile("\\{timestamp:([^}]*)\\}", Pattern.MULTILINE);
 	final Pattern username = Pattern.compile("\\{userid:([^}]*)\\}", Pattern.MULTILINE);
-	final Pattern revInfoPattern = Pattern.compile("\\{revcomment:([^}]*)\\}", Pattern.MULTILINE);	
+	// Use reluctant quantifier for '.' in the revcomment, to be able to handle revcomments with curly braces inside
+	final Pattern revInfoPattern = Pattern.compile("\\{revcomment:(.*?)\\}\\n", Pattern.MULTILINE);
 	final Pattern catPattern = Pattern.compile("\\[{2}CategoryRoot\\/([^\\]]*)\\]{2}", Pattern.MULTILINE);
 	
 	public MoinInfoConverter() {
