@@ -196,7 +196,7 @@ public class MoinmoinExporter implements Exporter {
 		String usersrc = srcDir + File.separator + "user";
 		log.debug("read UserInfo: " + usersrc);
 		
-		Pattern namefinder = Pattern.compile("^name=(\\S+)", Pattern.MULTILINE);
+		Pattern namefinder = Pattern.compile("^aliasname=(\\S+)", Pattern.MULTILINE);
 		
 		try{
 			File userdir = new File(usersrc);
@@ -230,7 +230,7 @@ public class MoinmoinExporter implements Exporter {
 		String usersrc = srcDir + File.separator + "user";
 		log.debug("read OrigNameInfo: " + usersrc);
 
-		Pattern origNameFinder = Pattern.compile("^origname=(\\S+)", Pattern.MULTILINE);
+		Pattern origNameFinder = Pattern.compile("^name=(\\S+)", Pattern.MULTILINE);
 
 		try{
 			File userdir = new File(usersrc);

@@ -67,8 +67,8 @@ public class MoinUserLinkConverter extends BaseConverter {
     private Map<String, String> getOrigNameToUserIdMapping(String userFileDir) {
         Map<String, String> res = new HashMap<String, String>();
 
-        Pattern origNameFinder = Pattern.compile("^origname=(\\S+)", Pattern.MULTILINE);
-        Pattern userIdFinder = Pattern.compile("^name=(\\S+)", Pattern.MULTILINE);
+        Pattern origNameFinder = Pattern.compile("^name=(\\S+)", Pattern.MULTILINE);
+        Pattern userIdFinder = Pattern.compile("^aliasname=(\\S+)", Pattern.MULTILINE);
 
         try{
             File userdir = new File(userFileDir);
